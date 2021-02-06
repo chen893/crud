@@ -157,7 +157,7 @@ CRUD(Create/Read/Update/Delete) ，本文是写给前端的入门服务端应用
 
 6. 安装好一个数据库（我用的是mongodb） 在nest中使用typeORM 还支持`mySql` `PostgreSQL` 、`Oracle`、`Microsoft SQL Server`、`SQLite`。
 
-7. 
+7. 安装Postman 后面我们将利用这个软件来发起请求
 
 ## 上手
 
@@ -210,6 +210,10 @@ $ nest g module todoList
 $ nest g controller todoList
 ```
 
+在`todo-list.module`文件中 `TodoListController` 已经自动导入。
+
+
+
 
 
 ### 创建service
@@ -220,11 +224,15 @@ $ nest g controller todoList
 $ nest g service todoList
 ```
 
- 
+ 在`todo-list.module`文件中 `TodoListService`已经自动导入。
 
 
+
+### 处理请求和参数
 
 接下来我们来熟悉一下这几个文件
+
+在controller 中处理客户端请求
 
 在 刚刚生成的文件`todo-list.controller`中编写代码
 
@@ -244,10 +252,11 @@ export class TodoListController {
   //当发送get请求到 http://localhost:3000/todo-list 时将会调用 findById() 函数
   @Get()
 
-  //这个使用了@Query()装饰器来获取id 值，这个将匹配到你在链接上的参数 比如 Get http://localhost:3000/todo-list?id=601a67c149ac9a49682c18a2
-  //将会获取到值 {"id": "601a67c149ac9a49682c18a2"},写入到值queryAata， 如果你装饰器@Query('参数') 里面有参数，
-  //就会获取({"id": "601a67c149ac9a49682c18a2"})["参数"] 写入到 queryAata
-  async findById(@Query('id') queryAata: string) {
+  //这个使用了@Query()装饰器来获取id 值，这个将匹配到你在链接上的参数 比如 Get http://localhost:3000/todo-list?name=test
+  //在浏览器里面直接输入链接，或者利用Postman测试示例
+  //将会获取到值 {name: "test"},写入到值queryAata， 如果你装饰器@Query('参数') 里面有参数，
+  //就会获取({name: "test"})["参数"] 写入到 queryAata 如果参数是'name' ({"name": "test"})["name"] = test
+  async findByName(@Query('name') queryAata: string) {
     return {
       success: true,
       message: 'OK',
@@ -255,14 +264,15 @@ export class TodoListController {
     };
   }
 
-    
   //当发送Post 请求到 http://localhost:3000/todo-list 时将会调用 addTodoItem() 函数
   @Post()
 
   //上面的@Query()装饰器 传输值的类型只能是字符串,当我们需要传输一个对象，或者布尔值等 需要用 @Body()装饰器.我们用Postman 来测试这个示例
   //Post http://localhost:3000/todo-list 然后设置参数 在Body参数里面选择 raw JSON  输入{"status": false}
+  //因为我写入了参数 'status' 所以 bodyData的值是 false ,如果我们没有写入参数 将会是{status: false}
   async addTodoItem(@Body('status') bodyData: boolean) {
     console.log(bodyData);
+
     return {
       success: true,
       message: 'OK',
@@ -270,14 +280,11 @@ export class TodoListController {
     };
   }
 
-    
-    
-  //当发送delete 请求到 http://localhost:3000/todo-list/123 时将会调用 DeleteToDoItem() 函数
+  //当发送Delete 请求到 http://localhost:3000/todo-list/123 时将会调用 DeleteToDoItem() 函数
   @Delete(':id')
-    //@Param() 获取到{'id': 123};
-  async DeleteToDoItem(@Param('id') id: string) { 
-    console.log(id);
-    return { success: true, message: 'OK', data: id };
+  //@Param() 获取到{ id: '123' },写入参数'id', paramData的值会是({id: '123'})['id']=123,
+  async DeleteToDoItem(@Param() paramData: string) {
+    return { success: true, message: 'OK', data: paramData };
   }
 }
 
@@ -285,14 +292,18 @@ export class TodoListController {
 
 
 
-创建一个简单的TodoListService开始`todo-list/todo-list.service.ts`
+### 简单的TodoListService
+
+创建一个简单的TodoListService`todo-list/todo-list.service.ts`
+
+
 
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { Item } from './interfaces/item.interface';
 @Injectable()
 export class TodoListService {
-  private todoList: TodoItem[] = [];
+  private todoList: Item[] = [];
   addTodoItem(item: Item) {
     return this.todoList.push(item);
   }
@@ -315,10 +326,13 @@ export class TodoListService {
 export interface Item {
   name: string;
   status: boolean;
-  id: string;
 }
 
 ```
+
+现在`TodoListService`里面有两个方法 一个是addTodoItem，将接受一个Item接口形状的数据，并把它保存到this.todoList 中，我们现在还没有用到数据库，在后面我们将用`typeORM`+`mongodb`来储存数据到数据库中。
+
+还有一个是findAll方法,将返回this.todoList。 
 
 
 
@@ -353,7 +367,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { TodoListService } from './todo-list.service';
-
+import { AddTodoItemDto } from './dto/add-todo-item.dto';
 @Controller('todo-list') // 将会匹配 http://localhost:3000/todo-list的请求
 export class TodoListController {
   constructor(private todoListService: TodoListService) {}
@@ -374,9 +388,8 @@ export class TodoListController {
   @Post()
   //上面的@Query()装饰器 传输值的类型只能是字符串,当我们需要传输一个对象，或者布尔值等 需要用 @Body()装饰器.我们用Postman 来测试这个示例
   //Post http://localhost:3000/todo-list 然后设置参数 在Body参数里面选择 raw JSON  输入{"status": false}
-  async addTodoItem(@Body() bodyData) {
+  async addTodoItem(@Body() bodyData: AddTodoItemDto) {
     await this.todoListService.addTodoItem(bodyData);
-    console.log(bodyData);
     return {
       success: true,
       message: 'OK',
@@ -388,14 +401,54 @@ export class TodoListController {
   //当发送delete 请求到 http://localhost:3000/todo-list 时将会调用 DeleteToDoItem() 函数
   @Delete(':id')
   async DeleteToDoItem(@Param('id') id: string) {
-    console.log(id);
     return { success: true, message: 'OK', data: id };
   }
 }
 
 ```
 
+因为后面将会用到管道来验证值的类型，接口将会在转换中删除，所以我们要新建一个类来定义传入值的形状。
 
+以下是官方文档的解释。
+
+ 首先(如果您使用 `TypeScript`)，我们需要确定 `DTO`(数据传输对象)模式。`DTO`是一个对象，它定义了如何通过网络发送数据。我们可以通过使用 `TypeScript`接口或简单的类来完成。令人惊讶的是，我们在这里推荐使用类。为什么?类是`JavaScript` `ES6`标准的一部分，因此它们在编译后的 `JavaScript`中保留为实际实体。另一方面，由于 `TypeScript`接口在转换过程中被删除，所以 `Nest`不能在运行时引用它们。这一点很重要，因为诸如**管道**之类的特性在运行时能够访问变量的元类型时提供更多的可能性。 
+
+```typescript
+export class CreateCatDto {
+  readonly name: string;
+  readonly age: number;
+  readonly breed: string;
+}
+```
+
+
+
+
+
+我们在`todo-list`文件夹下，新建一个文件夹 `dto`
+
+然后在`dto`下新建文件`add-todo-item-dto.ts`
+
+```typescript
+export class addTodoItemDto {
+  readonly name: string;
+  readonly status: boolean;
+}
+
+```
+
+在新建一个文件来储存 数据改变时要传入值的形状 。后面将会用的上
+
+`dto`文件夹下 新建文件 `update-todo-item-dto.ts`
+
+```typescript
+export class UpdateTodoItemDto {
+  readonly id: string;
+  readonly name: string;
+  readonly status: boolean;
+}
+
+```
 
 
 
@@ -407,7 +460,7 @@ export class TodoListController {
 
 接下来我们将数据储存进数据库中。
 
-安装依赖项 本例使用的是mongodb  你也可以使用其他数据库，在nest中TypeORM 还支持 `mySql`、 `PostgreSQL` 、`Oracle`、`Microsoft SQL Server`、`SQLite` ，只要安装好其他数据库的依赖， 在AppModule配置好数据库的连接，其他部分是一样的。
+本例使用的是mongodb  你也可以使用其他数据库，在nest中TypeORM 还支持 `mySql`、 `PostgreSQL` 、`Oracle`、`Microsoft SQL Server`、`SQLite` ，只要安装好其他数据库的依赖，例如你如果要使用`mysql` 只要把下面的命令中的`mongodb` 换成`mysql`， 在AppModule配置好数据库的连接，其他后面部分都是一样的。
 
 ```
 npm install --save @nestjs/typeorm typeorm mongodb
@@ -423,15 +476,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TodoListModule } from './todo-list/todo-list.module';
 @Module({
   imports: [
-    CatsModule,
+    TodoListModule,
     TypeOrmModule.forRoot({
-      type: 'mongodb',  //我用的是mongodb ，可选其他TypeORM 支持的数据库，安装好依赖  
-      host: 'localhost',   
+      type: 'mongodb', //我用的是mongodb ，可选其他TypeORM 支持的数据库，安装好依赖
+      host: 'localhost',
       port: 27017, //数据库端口号,mongodb默认27017
       //username: 'root',    因为mongodb 的连接不用 账号密码， 所以我这边注释了，如果你的数据库要密码的话，要写上去。
       //password: 'root',
-      database: 'nest',//
-      entities: [],    
+      database: 'nest', //
+      entities: [],
       synchronize: true,
       logging: false,
     }),
@@ -455,7 +508,7 @@ TypeORM 支持存储库设计模式，因此每个实体都有自己的存储库
 import { Entity, Column, ObjectIdColumn } from 'typeorm';
 @Entity()
 export class TodoItem {
-  @ObjectIdColumn() //这里文档是用 PrimaryGeneratedColumn装饰器的 但是我用mongodb储存数据会报错，所以我改用了 ObjectIdColumn这个装饰器。
+  @ObjectIdColumn() //文档是用 @PrimaryGeneratedColumn()装饰器的,也是从typeorm 中导入，但是我用mongodb储存数据会报错，所以我改用了 @ObjectIdColumn()这个装饰器。
   id: number;
 
   @Column()
@@ -479,23 +532,23 @@ export class TodoItem {
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TodoModule } from './todo/todo.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TodoItem } from './todo-list/todo-item.entity';
 import { TodoListModule } from './todo-list/todo-list.module';
+import { TodoItem } from './todo-list/todo-item.entity';
 @Module({
   imports: [
-    TodoModule,
+    TodoListModule,
     TypeOrmModule.forRoot({
-      type: 'mongodb',
+      type: 'mongodb', //我用的是mongodb ，可选其他TypeORM 支持的数据库，安装好依赖
       host: 'localhost',
-      port: 27017,
-      database: 'nest',
-      entities: [TodoItem],//这里
+      port: 27017, //数据库端口号,mongodb默认27017
+      //username: 'root',    因为mongodb 的连接不用 账号密码， 所以我这边注释了，如果你的数据库要密码的话，要写上去。
+      //password: 'root',
+      database: 'nest', //
+      entities: [TodoItem],
       synchronize: true,
       logging: false,
     }),
-    TodoListModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -526,7 +579,7 @@ export class TodoListModule {}
 
 ```
 
-`forFeature()` 方法定义在当前范围中注册哪些存储库.这样，我们就可以使用 `@InjectRepository()`装饰器将 `TodoItemRepository` 注入到 TodoListService` 中:
+`forFeature()` 方法定义在当前范围中注册哪些存储库.这样，我们就可以使用 `@InjectRepository()`装饰器将 `TodoItemRepository` 注入到 `TodoListService` 中:
 
 `/todo-list/todo-list.service.ts`
 
@@ -555,10 +608,11 @@ export class TodoListService {
 
   async remove(id: string): Promise<void> {
     await this.todoRepository.delete(id);
+    // return await this.todoRepository.delete(id);
     return null;
   }
-  async updateTodoItem(updateData: Item): Promise<void> {
-    await this.todoRepository.update(updateData.id, updateData);
+  async updateTodoItem(id: string, updateData: Item): Promise<void> {
+    await this.todoRepository.update(id, updateData);
     return null;
   }
 }
@@ -566,6 +620,10 @@ export class TodoListService {
 ```
 
 
+
+
+
+在`todo-list.controller`中编写代码
 
 ```typescript
 import {
@@ -580,7 +638,7 @@ import {
 } from '@nestjs/common';
 import { TodoListService } from './todo-list.service';
 import { UpdateTodoItemDto } from './dto/update-todo-item.dto';
-import { CreateTodoItemDto } from './dto/create-todo-item.dto';
+import { AddTodoItemDto } from './dto/add-todo-item.dto';
 @Controller('todo-list') // 将会匹配 http://localhost:3000/todo-list的请求
 export class TodoListController {
   constructor(private todoListService: TodoListService) {}
@@ -604,7 +662,7 @@ export class TodoListController {
     };
   }
   @Post()
-  async addTodoItem(@Body() bodyData: CreateTodoItemDto) {
+  async addTodoItem(@Body() bodyData: AddTodoItemDto) {
     const data = await this.todoListService.addTodoItem(bodyData);
     return {
       success: true,
@@ -614,8 +672,11 @@ export class TodoListController {
   }
 
   @Put()
-  async updateTodoItem(@Query() changeData: UpdateTodoItemDto) {
-    return this.todoListService.updateTodoItem(changeData);
+  async updateTodoItem(@Body() changeData: UpdateTodoItemDto) {
+    return this.todoListService.updateTodoItem(changeData.id, {
+      name: changeData.name,
+      status: changeData.status,
+    });
   }
   @Delete(':id')
   async DeleteToDoItem(@Param('id') id: string) {
@@ -656,16 +717,16 @@ export class TodoListController {
 Nest 与 [class-validator](https://github.com/pleerock/class-validator) 配合得很好。这个优秀的库允许您使用基于装饰器的验证。装饰器的功能非常强大，尤其是与 Nest 的 Pipe 功能相结合使用时，因为我们可以通过访问 `metatype` 信息做很多事情，在开始之前需要安装一些依赖。
 
 ```
-$ npm i --save class-validator class-transformerCopy to clipboardErrorCopied
+$ npm i --save class-validator class-transformer
 ```
 
-安装完成后，我们就可以向 `CreateTodoItemDto` 类添加一些装饰器。
+安装完成后，我们就可以向 `AddTodoItemDto` 类添加一些装饰器。
 
-> create-todo-item.dto.ts
+> add-todo-item.dto.ts
 
 ```typescript
 import { IsString, IsBoolean } from 'class-validator';
-export class CreateTodoItemDto {
+export class AddTodoItemDto {
   @IsString()
   readonly name: string;
   @IsBoolean()
@@ -674,13 +735,26 @@ export class CreateTodoItemDto {
 
 ```
 
+update-todo-item.dto.ts
 
+```typescript
+import { IsString, IsBoolean } from 'class-validator';
+export class UpdateTodoItemDto {
+  @IsString()
+  readonly id: string;
+  @IsString()
+  readonly name: string;
+  @IsBoolean()
+  readonly status: boolean;
+}
 
-接下来在todoList.controller 中应用 管道`ValidatioValinPipe` 
+```
 
-从 '@nestjs/common' 导入 nest 自带的管道`ValidatioValinPipe` ；
+接下来在todo-list.controller 中应用 管道`ValidatioValinPipe` 
 
-然后绑定管道（可以绑在 controller 或是其方法上），我们使用 `@UsePipes()` 装饰器 
+从 `@nestjs/common` 导入 nest 自带的管道`ValidatioValinPipe` ；
+
+然后绑定管道（可以绑在 controller 或是其方法上），我们使用 `@UsePipes()` 装饰器 ,也是从`@nestjs/common`中导入
 
 ```typescript
   @Post()
@@ -706,12 +780,13 @@ import {
   Query,
   Param,
   Put,
-  ValidationPipe,
   UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { TodoListService } from './todo-list.service';
 import { UpdateTodoItemDto } from './dto/update-todo-item.dto';
-import { CreateTodoItemDto } from './dto/create-todo-item.dto';
+import { AddTodoItemDto } from './dto/add-todo-item.dto';
+
 @Controller('todo-list') // 将会匹配 http://localhost:3000/todo-list的请求
 export class TodoListController {
   constructor(private todoListService: TodoListService) {}
@@ -736,7 +811,7 @@ export class TodoListController {
   }
   @Post()
   @UsePipes(ValidationPipe)
-  async addTodoItem(@Body() bodyData: CreateTodoItemDto) {
+  async addTodoItem(@Body() bodyData: AddTodoItemDto) {
     const data = await this.todoListService.addTodoItem(bodyData);
     return {
       success: true,
@@ -747,8 +822,11 @@ export class TodoListController {
 
   @Put()
   @UsePipes(ValidationPipe)
-  async updateTodoItem(@Query() changeData: UpdateTodoItemDto) {
-    return this.todoListService.updateTodoItem(changeData);
+  async updateTodoItem(@Body() changeData: UpdateTodoItemDto) {
+    return this.todoListService.updateTodoItem(changeData.id, {
+      name: changeData.name,
+      status: changeData.status,
+    });
   }
   @Delete(':id')
   async DeleteToDoItem(@Param('id') id: string) {
@@ -785,15 +863,13 @@ $ npm install --save @nestjs/swagger swagger-ui-express
 
 ```typescript
 import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ApplicationModule } from './app.module';
-
 async function bootstrap() {
-  const app = await NestFactory.create(ApplicationModule);
-
+  const app = await NestFactory.create(AppModule);
   const options = new DocumentBuilder()
-    .setTitle('Cats example')
-    .setDescription('The cats API description')
+    // .setTitle('Cats example')
+    .setDescription('The todoList API description')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, options);
@@ -802,6 +878,7 @@ async function bootstrap() {
   await app.listen(3000);
 }
 bootstrap();
+
 ```
 
 `DocumentBuilder` 有助于构建符合 OpenAPI 规范的基础文档。它提供了几种允许设置诸如标题，描述，版本等属性的方法。为了创建一个完整的文档（使用已定义的 HTTP 路由），我们使用 `SwaggerModule` 类的 `createDocument()` 方法。 此方法接收两个参数，即应用程序实例和 Swagger 选项对象。
