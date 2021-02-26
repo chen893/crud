@@ -13,7 +13,7 @@ export class TodoListService {
   async findAll(): Promise<TodoItem[]> {
     return this.todoRepository.find();
   }
-  async addTodoItem(item): Promise<TodoItem> {
+  async addTodoItem(item: Item): Promise<TodoItem> {
     return this.todoRepository.save(item);
   }
   async findByName(name: string): Promise<TodoItem[]> {
@@ -22,7 +22,6 @@ export class TodoListService {
 
   async remove(id: string): Promise<void> {
     await this.todoRepository.delete(id);
-    // return await this.todoRepository.delete(id);
     return null;
   }
   async updateTodoItem(id: string, updateData: Item): Promise<void> {

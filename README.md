@@ -837,6 +837,12 @@ bootstrap();
 
 
 
+`发起post 请求 添加一个不符合要求的数据 `
+
+![1614344655151](./picture/5.png)
+
+返回**status must be a boolean value**
+
 
 
 ## Swgger
@@ -892,7 +898,7 @@ $ npm run start
 
 应用程序运行时，打开浏览器并导航到 `http://localhost:3000/api` 。 你应该可以看到 Swagger UI
 
-![1614346574672](./picture/5.png)
+![1614346574672](./picture/6.png)
 
 
 
