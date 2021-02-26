@@ -47,10 +47,6 @@ export class Todo {
 
 
 
-### 3.Tab Size 
-
-vscode 设置-> Tab Size ->设置为2
-
 
 
 ## 阅读前
@@ -59,10 +55,11 @@ CRUD(Create/Read/Update/Delete) ，本文是写给前端的入门服务端应用
 
 
 
-你需要了解
+本文将涉及到
 
 - TypeScript
 - es6+
+- node
 
 
 
@@ -141,7 +138,7 @@ CRUD(Create/Read/Update/Delete) ，本文是写给前端的入门服务端应用
 
    因为后面将会用到管道来验证值的类型
 
-    首先(如果您使用 `TypeScript`)，我们需要确定 `DTO`(数据传输对象)模式。`DTO`是一个对象，它定义了如何通过网络发送数据。我们可以通过使用 `TypeScript`接口或简单的类来完成。令人惊讶的是，我们在这里推荐使用类。为什么?类是`JavaScript` `ES6`标准的一部分，因此它们在编译后的 `JavaScript`中保留为实际实体。另一方面，由于 `TypeScript`接口在转换过程中被删除，所以 `Nest`不能在运行时引用它们。这一点很重要，因为诸如**管道**之类的特性在运行时能够访问变量的元类型时提供更多的可能性。 
+    首先(如果您使用 `TypeScript`)，我们需要确定 `DTO`(数据传输对象)模式。`DTO`是一个对象，它定义了如何通过网络发送数据。我们可以通过使用 `TypeScript`接口或简单的类来完成。推荐使用类。为什么?类是`JavaScript` `ES6`标准的一部分，因此它们在编译后的 `JavaScript`中保留为实际实体。另一方面，由于 `TypeScript`接口在转换过程中被删除，所以 `Nest`不能在运行时引用它们。这一点很重要，因为诸如**管道**之类的特性在运行时能够访问变量的元类型时提供更多的可能性。 
 
    ```typescript
    export class CreateCatDto {
@@ -153,17 +150,15 @@ CRUD(Create/Read/Update/Delete) ，本文是写给前端的入门服务端应用
 
    
 
-5. 安装好 node
+5. 安装好 **node**
 
-6. 安装好一个数据库（我用的是mongodb） 在nest中使用typeORM 还支持`mySql` `PostgreSQL` 、`Oracle`、`Microsoft SQL Server`、`SQLite`。
+6. 安装好一个数据库（本文用的是**mongodb**） 在nest中使用typeORM 还支持`mySql` `PostgreSQL` 、`Oracle`、`Microsoft SQL Server`、`SQLite`。
 
-7. 安装Postman 后面我们将利用这个软件来发起请求
+7. 安装数据库可视化工具 我用的是 **MongoDB  Compass**，我们用它查询数据库中的数据。
+
+8. 安装**Postman** 后面我们将利用这个软件来发起请求
 
 ## 上手
-
-### 安装Node.js
-
-
 
 ### 使用Nest CLI 建立新项目
 
@@ -188,7 +183,7 @@ $ npm run start --watch
 
  每个 Nest 应用程序至少有一个模块，即根模块。根模块是 Nest 开始安排应用程序树的地方。事实上，根模块可能是应用程序中唯一的模块，特别是当应用程序很小时，但是对于大型程序来说这是没有意义的。在大多数情况下，您将拥有多个模块，每个模块都有一组紧密相关的**功能**。 
 
-使用CLI创建模块
+使用CLI创建module
 
 ```
 $ nest g module todoList 
@@ -206,6 +201,8 @@ $ nest g module todoList
 
 为了创建一个基本的控制器，我们使用类和`装饰器`。装饰器将类与所需的元数据相关联，并使 `Nest` 能够创建路由映射（将请求绑定到相应的控制器）。
 
+使用CLI创建controller
+
 ```
 $ nest g controller todoList
 ```
@@ -220,6 +217,8 @@ $ nest g controller todoList
 
  Providers 是 `Nest` 的一个基本概念。许多基本的 `Nest` 类可能被视为 provider - `service`,` repository`, `factory`, `helper` 等等。 他们都可以通过 `constructor` **注入**依赖关系。 这意味着对象可以彼此创建各种关系，并且“连接”对象实例的功能在很大程度上可以委托给 `Nest`运行时系统。 Provider 只是一个用 `@Injectable()` 装饰器注释的类。 
 
+使用CLI创建service
+
 ```
 $ nest g service todoList
 ```
@@ -230,7 +229,7 @@ $ nest g service todoList
 
 ### 处理请求和参数
 
-接下来我们来熟悉一下这几个文件
+接下来我们来熟悉一下刚才创建的几个文件。
 
 在controller 中处理客户端请求
 
@@ -330,15 +329,19 @@ export interface Item {
 
 ```
 
-现在`TodoListService`里面有两个方法 一个是addTodoItem，将接受一个Item接口形状的数据，并把它保存到this.todoList 中，我们现在还没有用到数据库，在后面我们将用`typeORM`+`mongodb`来储存数据到数据库中。
+现在`TodoListService`里面有两个方法 一个是**addTodoItem**，将接受一个Item接口形状的数据，并把它保存到this.todoList 中，这里我们还没有用到数据库，在后面我们将用`typeORM`来储存数据到数据库中。
 
-还有一个是findAll方法,将返回this.todoList。 
+还有一个是**findAll**方法,将返回this.todoList。 
 
 
 
 `todo-list.controller.ts` 
 
-在 `TodoListController`中使用TodoListService
+在 `TodoListController`中使用`TodoListService`
+
+```typescript
+import { TodoListService } from './todo-list.service';
+```
 
 ```typescript
 export class TodoListController{
@@ -357,15 +360,7 @@ const data = await this.todoListService.addTodoItem(bodyData);
 完整代码
 
 ```typescript
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Query,
-  Param,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Delete, Param } from '@nestjs/common';
 import { TodoListService } from './todo-list.service';
 import { AddTodoItemDto } from './dto/add-todo-item.dto';
 @Controller('todo-list') // 将会匹配 http://localhost:3000/todo-list的请求
@@ -427,10 +422,10 @@ export class CreateCatDto {
 
 我们在`todo-list`文件夹下，新建一个文件夹 `dto`
 
-然后在`dto`下新建文件`add-todo-item-dto.ts`
+然后在`dto`下新建文件`add-todo-item.dto.ts`
 
 ```typescript
-export class addTodoItemDto {
+export class AddTodoItemDto {
   readonly name: string;
   readonly status: boolean;
 }
@@ -439,7 +434,7 @@ export class addTodoItemDto {
 
 在新建一个文件来储存 数据改变时要传入值的形状 。后面将会用的上
 
-`dto`文件夹下 新建文件 `update-todo-item-dto.ts`
+`dto`文件夹下 新建文件 `update-todo-item.dto.ts`
 
 ```typescript
 export class UpdateTodoItemDto {
@@ -450,7 +445,19 @@ export class UpdateTodoItemDto {
 
 ```
 
+现在我们使用PostMan来测试下程序
 
+`post请求` 
+
+***
+
+![1614343527563](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614343527563.png)
+
+
+
+`get请求`
+
+![1614343637927](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614343637927.png)
 
 
 
@@ -463,7 +470,7 @@ export class UpdateTodoItemDto {
 本例使用的是mongodb  你也可以使用其他数据库，在nest中TypeORM 还支持 `mySql`、 `PostgreSQL` 、`Oracle`、`Microsoft SQL Server`、`SQLite` ，只要安装好其他数据库的依赖，例如你如果要使用`mysql` 只要把下面的命令中的`mongodb` 换成`mysql`， 在AppModule配置好数据库的连接，其他后面部分都是一样的。
 
 ```
-npm install --save @nestjs/typeorm typeorm mongodb
+$ npm install --save @nestjs/typeorm typeorm mongodb
 ```
 
 在AppModule 中导入 TypeOrmModule
@@ -483,8 +490,8 @@ import { TodoListModule } from './todo-list/todo-list.module';
       port: 27017, //数据库端口号,mongodb默认27017
       //username: 'root',    因为mongodb 的连接不用 账号密码， 所以我这边注释了，如果你的数据库要密码的话，要写上去。
       //password: 'root',
-      database: 'nest', //
-      entities: [],
+      database: 'nest', 
+      entities: [],//这个是导入的实体 在后面我们创建实体后，要添加进这个数组里面。
       synchronize: true,
       logging: false,
     }),
@@ -508,7 +515,7 @@ TypeORM 支持存储库设计模式，因此每个实体都有自己的存储库
 import { Entity, Column, ObjectIdColumn } from 'typeorm';
 @Entity()
 export class TodoItem {
-  @ObjectIdColumn() //文档是用 @PrimaryGeneratedColumn()装饰器的,也是从typeorm 中导入，但是我用mongodb储存数据会报错，所以我改用了 @ObjectIdColumn()这个装饰器。
+  @ObjectIdColumn() //文档是用 @PrimaryGeneratedColumn()装饰器的,也是从typeorm 中导入，但是我的数据库是mongodb储存数据会报错，所以我改用了 @ObjectIdColumn()这个装饰器。
   id: number;
 
   @Column()
@@ -579,9 +586,23 @@ export class TodoListModule {}
 
 ```
 
-`forFeature()` 方法定义在当前范围中注册哪些存储库.这样，我们就可以使用 `@InjectRepository()`装饰器将 `TodoItemRepository` 注入到 `TodoListService` 中:
+`forFeature()` 方法定义在当前范围中注册了哪些存储库。注册后，我们就可以使用 `@InjectRepository()`装饰器将 `TodoItemRepository` 注入到 `TodoListService` 中:
 
 `/todo-list/todo-list.service.ts`
+
+```typescript
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+export class TodoListService {
+  constructor(
+    @InjectRepository(TodoItem)
+    private todoRepository: Repository<TodoItem>,
+  ) {}
+}
+```
+
+
 
 ```typescript
 import { Injectable } from '@nestjs/common';
@@ -599,7 +620,7 @@ export class TodoListService {
   async findAll(): Promise<TodoItem[]> {
     return this.todoRepository.find();
   }
-  async addTodoItem(item): Promise<TodoItem> {
+  async addTodoItem(item: Item): Promise<TodoItem> {
     return this.todoRepository.save(item);
   }
   async findByName(name: string): Promise<TodoItem[]> {
@@ -693,6 +714,30 @@ export class TodoListController {
 
 
 
+
+
+`post请求添加一个数据`
+
+![1614344937904](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614344937904.png)
+
+
+
+使用`mongodb compass` 查看数据库中的数据
+
+![1614344655151](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614344655151.png)
+
+
+
+使用`Get请求获取数据库中的数据`
+
+![1614344769278](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614344769278.png)
+
+
+
+`Put请求更新数据 `  需要 传入id,name,status,三个值。
+
+`Delete 请求删除数据`
+
 ## 使用管道
 
 现在直接发起请求并不会验证传输的值，会直接进行操作，我们使用管道来解决这个问题。
@@ -750,7 +795,7 @@ export class UpdateTodoItemDto {
 
 ```
 
-接下来在todo-list.controller 中应用 管道`ValidatioValinPipe` 
+接下来在`todo-list.controller `中应用 管道`ValidatioValinPipe` 
 
 从 `@nestjs/common` 导入 nest 自带的管道`ValidatioValinPipe` ；
 
@@ -768,76 +813,25 @@ export class UpdateTodoItemDto {
   }
 ```
 
-完整代码如下
+
+
+
+
+更好的方法是， 将`ValidationPipe`设置为一个**全局作用域**的管道，用于整个应用程序中的每个路由处理器。  
+
+`src/main.ts`
 
 ```typescript
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Query,
-  Param,
-  Put,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
-import { TodoListService } from './todo-list.service';
-import { UpdateTodoItemDto } from './dto/update-todo-item.dto';
-import { AddTodoItemDto } from './dto/add-todo-item.dto';
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
 
-@Controller('todo-list') // 将会匹配 http://localhost:3000/todo-list的请求
-export class TodoListController {
-  constructor(private todoListService: TodoListService) {}
-
-  @Get()
-  async findAll() {
-    const data = await this.todoListService.findAll();
-    return {
-      success: true,
-      message: 'OK',
-      data,
-    };
-  }
-  @Get('/find')
-  async findByName(@Query('name') name: string) {
-    const data = await this.todoListService.findByName(name);
-    return {
-      success: true,
-      message: 'OK',
-      data,
-    };
-  }
-  @Post()
-  @UsePipes(ValidationPipe)
-  async addTodoItem(@Body() bodyData: AddTodoItemDto) {
-    const data = await this.todoListService.addTodoItem(bodyData);
-    return {
-      success: true,
-      message: 'OK',
-      data,
-    };
-  }
-
-  @Put()
-  @UsePipes(ValidationPipe)
-  async updateTodoItem(@Body() changeData: UpdateTodoItemDto) {
-    return this.todoListService.updateTodoItem(changeData.id, {
-      name: changeData.name,
-      status: changeData.status,
-    });
-  }
-  @Delete(':id')
-  async DeleteToDoItem(@Param('id') id: string) {
-    const data = await this.todoListService.remove(id);
-    return {
-      success: true,
-      message: 'OK',
-      data,
-    };
-  }
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe());
+  await app.listen(3000);
 }
+bootstrap();
 
 ```
 
@@ -862,19 +856,20 @@ $ npm install --save @nestjs/swagger swagger-ui-express
 安装过程完成后，打开引导文件（主要是 `main.ts` ）并使用 `SwaggerModule` 类初始化 Swagger：
 
 ```typescript
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe());
+
   const options = new DocumentBuilder()
-    // .setTitle('Cats example')
     .setDescription('The todoList API description')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api', app, document);
-
   await app.listen(3000);
 }
 bootstrap();
@@ -897,9 +892,7 @@ $ npm run start
 
 应用程序运行时，打开浏览器并导航到 `http://localhost:3000/api` 。 你应该可以看到 Swagger UI
 
-
-
-
+![1614346574672](https://raw.githubusercontent.com/chen893/-/main/picture/1614346574672.png)
 
 
 
