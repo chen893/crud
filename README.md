@@ -451,13 +451,13 @@ export class UpdateTodoItemDto {
 
 ***
 
-![1614343527563](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614343527563.png)
+![1614343527563](./picture/0.png)
 
 
 
 `get请求`
 
-![1614343637927](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614343637927.png)
+![1614343637927](./picture/1.png)
 
 
 
@@ -718,19 +718,19 @@ export class TodoListController {
 
 `post请求添加一个数据`
 
-![1614344937904](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614344937904.png)
+![1614344937904](./picture/2.png)
 
 
 
 使用`mongodb compass` 查看数据库中的数据
 
-![1614344655151](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614344655151.png)
+![1614344655151](./picture/3.png)
 
 
 
 使用`Get请求获取数据库中的数据`
 
-![1614344769278](C:\Users\io\AppData\Roaming\Typora\typora-user-images\1614344769278.png)
+![1614344769278](./picture/4.png)
 
 
 
@@ -892,7 +892,7 @@ $ npm run start
 
 应用程序运行时，打开浏览器并导航到 `http://localhost:3000/api` 。 你应该可以看到 Swagger UI
 
-![1614346574672](https://raw.githubusercontent.com/chen893/-/main/picture/1614346574672.png)
+![1614346574672](./picture/5.png)
 
 
 
