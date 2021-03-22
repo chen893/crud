@@ -28,4 +28,9 @@ export class TodoListService {
     await this.todoRepository.update(id, updateData);
     return null;
   }
+  async deleteAll() {
+    const user = await this.todoRepository.find();
+    await this.todoRepository.remove(user);
+    return [];
+  }
 }
